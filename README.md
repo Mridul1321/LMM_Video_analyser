@@ -1,5 +1,5 @@
 
-# Video Understanding and Analysis with Streamlit
+# CROSS MODAL Large Multimodality Model
 
 ## Overview
 
