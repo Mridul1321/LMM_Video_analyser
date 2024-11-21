@@ -74,9 +74,9 @@ This Streamlit application provides tools for video understanding and analysis, 
    - **Sentiment Analysis:** Analyze the sentiment of extracted text.
    - **Question Answering:** Ask questions about the video content, and get responses based on the extracted text.
 
-     ![ui1](https://github.com/user-attachments/assets/35637822-6a12-49b7-8f77-0f47044636aa)
-     
+             ![ui1](https://github.com/user-attachments/assets/35637822-6a12-49b7-8f77-0f47044636aa)
 
+     
 3. **Interacting with the App:**
    The app provides a simple user interface where you can upload videos and trigger the processing tasks. Results are displayed in real-time.
 
