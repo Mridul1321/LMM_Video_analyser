@@ -80,8 +80,10 @@ This Streamlit application provides tools for video understanding and analysis, 
 3. **Interacting with the App:**
    The app provides a simple user interface where you can upload videos and trigger the processing tasks. Results are displayed in real-time.
 
-## Example
 
+![ui1](https://github.com/user-attachments/assets/5e7eaf6a-763a-4792-8f3d-17cc806d3def)
+
+## Example
 To run the Streamlit app, simply exe
 
 cute:
