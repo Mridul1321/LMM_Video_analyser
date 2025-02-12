@@ -1,0 +1,82 @@
+[
+    {
+        "question":  " What year did India gain independence? ",
+        "expected_output": "1947",
+        "generated_output": "The year India gained independence was 1947."
+    },
+    {
+        "question":  "Which two countries were created after India's partition? ",
+        "expected_output": "India,Pakisthan",
+        "generated_output": "The two countries created after India's partition were Pakistan and Bangladesh."
+    },
+    {
+        "question":  "What country did East Pakistan become in 1971? ",
+        "expected_output": "Bangladesh",
+        "generated_output": "East Pakistan became the new country of Bangladesh in 1971."
+    },
+    {
+        "question":  "What was the decision of the Hindu ruler of Kashmir regarding its affiliation in 1947? ",
+        "expected_output": "Join India",
+        "generated_output": "The Hindu ruler of Kashmir decided to join India in 1947."
+    },
+    {
+        "question":  "Who might be the speaker of this Video ",
+        "expected_output": "Barack Obama",
+        "generated_output": "The speaker of the video is Barack Obama."
+    },
+    {
+        "question":  "What is the \\\"Golden Rule\\\" mentioned in the excerpt? ",
+        "expected_output":  "The Golden Rule is to treat others as you would like to be treated. ",
+        "generated_output": "The \"Golden Rule\" mentioned in the excerpt is the principle of treating others as you would like to be treated."
+    },
+    {
+        "question":  "What does the speaker say about the role of math in education? ",
+        "expected_output":  "Math teaches critical thinking and problem-solving, even if you don't directly use algebra in your job or daily life. ",
+        "generated_output": "The speaker says that math plays a role in education."
+    },
+    {
+        "question":  "How does the speaker view instant fame? ",
+        "expected_output":  "The speaker believes that instant fame, such as becoming famous for being on a reality show, does not lead to lasting achievement. ",
+        "generated_output": "The speaker views instant fame as not leading to lasting, sustained achievement."
+    },
+    {
+        "question":  "How does education help in personal growth according to the speaker? ",
+        "expected_output":  "Education helps you become a better human being by allowing you to understand and empathize with others' struggles. ",
+        "generated_output": "The speaker believes that education helps in personal growth by teaching critical thinking, problem-solving skills, and the value of discipline."
+    },
+    {
+        "question":  "If someone forgot to add garlic paste, how might the flavor of the Vegetable Pulao differ? ",
+        "expected_output":  "Without garlic paste, the Vegetable Pulao might lack the depth of flavor and subtle pungency that garlic provides. It could taste milder, and the overall savory profile might feel incomplete. ",
+        "generated_output": "The flavor of the Vegetable Pulao would be different if someone forgot to add garlic paste."
+    },
+    {
+        "question":  "Why might the chef suggest adding coriander leaves both during and after cooking? ",
+        "expected_output":  "Adding coriander leaves during cooking infuses the dish with their flavor, while adding them as a garnish after cooking enhances freshness, aroma, and visual appeal.\"",
+        "generated_output": "The chef suggests adding coriander leaves both during and after cooking to enhance the flavor of the dish."
+    },
+    {
+        "question":  "The chef says, \\u2018See how super the vegetables look.\\u2019 What does this imply about the importance of presentation in cooking? ",
+        "expected_output":  "This implies that visual appeal is a key part of the dining experience. Well-cooked, vibrant vegetables enhance the dish's attractiveness, making it more appetizing and enjoyable.\",         \"generated_output\": \"The importance of presentation in cooking is crucial for food appeal. The chef emphasizes this point by saying, \\\"See how super the vegetables look.\\\" This implies that the presentation of the dish is just as important as its taste and quality. A well-presented dish can increase appetite and enhance overall dining satisfaction. Attention to detail in plating and garnishing can elevate a simple dish into a visually appealing one, making it more appealing and palatable to the consumer. \\n\\nIn this context, the chef's emphasis on presentation highlights the significance of visual appeal in cooking. It suggests that a well-presented dish is not just aesthetically pleasing but also more engaging and appetizing.\"",
+        "generated_output": "The chef says, \"See how super the vegetables look.\" This implies that the importance of presentation in cooking is emphasized."
+    },
+    {
+        "question":  "Why do you think the chef repeatedly emphasizes stirring and mixing during the cooking process? ",
+        "expected_output":  "Stirring and mixing ensure that the flavors are evenly distributed and prevent any ingredients from sticking to the bottom or burning, resulting in a well-balanced and evenly cooked dish. ",
+        "generated_output": "The chef repeatedly emphasizes stirring and mixing during the cooking process to ensure that the ingredients are well combined and evenly cooked."
+    },
+    {
+        "question":  "What is the color of the recipe? ",
+        "expected_output": "Green",
+        "generated_output": "The color of the recipe is green."
+    },
+    {
+        "question":  "How might skipping the step of adding oil affect the texture of the dish? ",
+        "expected_output":  "Without oil, the rice grains are more likely to stick together during cooking, resulting in a mushy texture rather than the desired fluffy and separate grains. ",
+        "generated_output": "The dish will have a different texture if oil is skipped."
+    },
+    {
+        "question":  "Who is the speaker of this recipe process? ",
+        "expected_output": "Rekha",
+        "generated_output": "The speaker of this recipe process is Rekha Aduge."
+    }
+]

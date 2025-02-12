@@ -49,10 +49,10 @@ if 'user_input' not in st.session_state:
     st.session_state.user_input=''
 if 'embedded' not in st.session_state:
     st.session_state.embedded=False
-if 'llm_model' not in st.session_state:
-    st.session_state.llm_model=None
-if 'tokenizer' not in st.session_state:
-    st.session_state.tokenizer=None
+# if 'llm_model' not in st.session_state:
+#     st.session_state.llm_model=None
+# if 'tokenizer' not in st.session_state:
+#     st.session_state.tokenizer=None
 if 'extracted_text' not in st.session_state:
     st.session_state.extracted_text=None
 if 'embedding_model' not in st.session_state:
@@ -71,6 +71,12 @@ if 'output_folder' not in st.session_state:
     st.session_state.output_folder='temp_video_images'
 if 'retriever_engine' not in st.session_state:
     st.session_state.retriever_engine=None
+if 'client' not in st.session_state:
+    st.session_state.client=InferenceClient(api_key="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")
+if 'hg_model' not in st.session_state:
+    st.session_state.hg_model="meta-llama/Llama-3.2-11B-Vision-Instruct"
+
+
 
 def extract_text_from_frame(frame):
     # Convert the frame to grayscale for better OCR accuracy
@@ -234,7 +240,7 @@ def clear_gpu_memory(model):
 #         get_text(audio_file_info)
 
 def get_text(audio_path):
-    mode_creation()
+    # mode_creation()
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
     model_id_whisper = "openai/whisper-large-v3"
@@ -266,36 +272,79 @@ def get_text(audio_path):
     summarizer(result["text"])
 
 def mode_creation():
-    load_dotenv()
-    os.environ["LANGCHAIN_TRACING_V2"] = "true"
-    os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
-    llm = Ollama(model="llama3")
-    output_parser = StrOutputParser()
-    st.session_state.llm_model = llm
-    st.session_state.tokenizer = output_parser
+    # load_dotenv()
+    # os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    # os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+    # llm = Ollama(model="llama3")
+    # output_parser = StrOutputParser()
+    # st.session_state.llm_model = llm
+    # st.session_state.tokenizer = output_parser
+    from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
-def prompt_formatter_summ():
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", "Based on the following text, please give the summary of the text. Don't return the thinking, only return the answer. Make sure your answers are as explanatory as possible.\nNow use the following text to summarize the text: {text}\nAnswer:"),
-            ("user", "Provide the summary of the given audio from a video.")
-        ]
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+    "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto")
+    processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct")
+    st.session_state.llm_model =model
+    st.session_state.tokenizer=processor
+
+def model_input(messages):
+    model=st.session_state.llm_model 
+    processor=st.session_state.tokenizer
+    text = processor.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
     )
-    return prompt
+    from qwen_vl_utils import process_vision_info
+    image_inputs, video_inputs = process_vision_info(messages)
+    inputs = processor(
+        text=[text],
+        images=image_inputs,
+        videos=video_inputs,
+        padding=True,
+        return_tensors="pt",
+    )
+    inputs = inputs.to("cuda")
 
+    # Inference: Generation of the output
+    generated_ids = model.generate(**inputs, max_new_tokens=128)
+    generated_ids_trimmed = [
+        out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+    ]
+    output_text = processor.batch_decode(
+        generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+    )
+    return output_text[0]
 def summarizer(text, temperature=0.7, max_new_tokens=512, format_answer_text=True, return_answer_only=True):
-    prompt = prompt_formatter_summ()
-    llm_model=st.session_state.llm_model
-    tokenizer=st.session_state.tokenizer
-    chain = prompt | llm_model |tokenizer 
-    print("Stated")
-    output_text = chain.invoke({"text": text})
-    print("Text generated")
-    st.session_state['messages'].append({"role": "bot", "content": f'The summary of the file: {output_text}'})
-    st.session_state.image_processed = True
-    embedding()
+    mode_creation()
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                
+                {"type": "text",
+                  "text": """You are a text summarizer. Your task is to summarize the provided text accurately. 
+                    Provide only the summary, without additional commentary.
+                    \n\n
+                    Text: [{}]""".format(text)},
+            ],
+        }
+    ]
+    # client = st.session_state.client
+    # model = st.session_state.hg_model
+    print("Sum started")
+    try:
+        output_text=model_input(messages)
+        print(output_text)
+        st.session_state['messages'].append({"role": "bot", "content": f'The summary of the file: {output_text}'})
+        st.session_state.image_processed = True
+        embedding()
+        return output_text
+
+    except Exception as e:
+        print("Error: Could not get a response from Hugging Face. Exception:", e)
+        return None
 
 def embedding():
+    print("Embedding process")
     text = st.session_state.extracted_text
     sentences_of_text = sent_tokenize(text)
     num_sentence_chunk_size = 10
@@ -339,22 +388,22 @@ def embedding():
     st.session_state.chunks = chunks
 
 
-def prompt_formatter_rag():
-    prompt = ChatPromptTemplate.from_messages(
-      [
-    ("system", """You are a video analysis assistant. Your task is to answer the query using only the provided 'Image Content' and 'Audio Content.' Review both sources independently and together to determine if the answer can be found in one, the other, or a combination of both.\n\n
-- If the answer is found in only one of the contents, use that information directly.
-- If relevant information appears in both, combine details from each source to form a complete answer.\n
-Provide the answer without adding interpretations beyond the content provided.
+# def prompt_formatter_rag():
+#     prompt = ChatPromptTemplate.from_messages(
+#       [
+#     ("system", """You are a video analysis assistant. Your task is to answer the query using only the provided 'Image Content' and 'Audio Content.' Review both sources independently and together to determine if the answer can be found in one, the other, or a combination of both.\n\n
+# - If the answer is found in only one of the contents, use that information directly.
+# - If relevant information appears in both, combine details from each source to form a complete answer.\n
+# Provide the answer without adding interpretations beyond the content provided.
 
-Image Content: {image_content}
-Audio Content: {audio_content}"""),
-    ("user", "Query: {query}")
-]
+# Image Content: {image_content}
+# Audio Content: {audio_content}"""),
+#     ("user", "Query: {query}")
+# ]
 
-    )
+#     )
 
-    return prompt
+#     return prompt
 
 # def prompt_formatter_rag():
 #     prompt = ChatPromptTemplate.from_messages(
@@ -375,19 +424,52 @@ def retriever_score(query):
     scores, indices = torch.topk(input=dot_scores, k=1)
     return scores, indices
 
-def rag_answers(query,image_content, temperature=0.8, max_new_tokens=512, format_answer_text=True):
+def rag_answers(query, image_content, temperature=0.8, max_new_tokens=512, format_answer_text=True):
+    client = st.session_state.client
+    
     chunks = st.session_state.chunks
     scores, indices = retriever_score(query)
     context_items = [chunks[i] for i in indices]
     for i, item in enumerate(context_items):
         item["score"] = scores[i].cpu()
-
-    prompt = prompt_formatter_rag()
+    
     context = "- " + "\n- ".join([item["sentence_chunk"] for item in context_items])
-    chain = prompt | st.session_state.llm_model | st.session_state.tokenizer
-    print(image_content)
-    output_text = chain.invoke({'image_content':image_content,"audio_content":context,"query":query})
-    st.session_state['messages'].append({"role": "bot", "content": output_text})
+    
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                """You are a video analysis assistant. Your task is to answer the query using only the provided 'Image Content' and 'Audio Content.' 
+                Review both sources independently and together to determine if the answer can be found in one, the other, or a combination of both.\n
+                - If the answer is found in only one of the contents, use that information directly.
+                - If relevant information appears in both, combine details from each source to form a complete answer.
+                Provide the answer without adding interpretations beyond the content provided.\n\n
+                Image Content: {image_content}
+                Audio Content: {audio_content}
+                """.format(image_content=image_content, audio_content=context)
+            )
+        },
+        {
+            "role": "user",
+            "content": "Query: {}".format(query)
+        }
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model=st.session_state.hg_model,
+            messages=messages,
+            max_tokens=max_new_tokens,
+            temperature=temperature
+        )
+        output_text = response['choices'][0]['message']['content']
+        
+        st.session_state['messages'].append({"role": "bot", "content": output_text})
+        return output_text
+
+    except Exception as e:
+        print("Error: Could not get a response from Hugging Face. Exception:", e)
+        return None
 
 # def main():
 #     st.title("Video Understanding App")
@@ -465,7 +547,7 @@ def video_to_image(file):
     reg_video()
 
 def upload_video_file(file_path):
-    url = 'http://117.253.188.205:47/upload'
+    url = 'http://mridul.ddns.net:47/upload'
 
     try :
 
@@ -478,42 +560,82 @@ def upload_video_file(file_path):
     except :
         print("Cant connect to the server url :",url)
     
-
-def image_process_api_llama(query):
+def image_and_audio_process(query):
     import random
-    max_token=random.randint(800, 1000)
-    client = InferenceClient(api_key="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")
-    query=query
+    # max_token = random.randint(800, 1000)
+    # client=st.session_state.client
+    image_url = "http://mridul.ddns.net:47/image.jpg"
+
+    chunks = st.session_state.chunks
+    scores, indices = retriever_score(query) 
+    context_items = [chunks[i] for i in indices]
+    context = "- " + "\n- ".join([item["sentence_chunk"] for item in context_items])
+
     messages = [{
         "role": "user",
         "content": [
             {
                 "type": "text",
-                "text": """You are a video analyst. Your task is to analyze the provided image retrieved from the RAG system and answer the query accurately. 
+                "text": f"""You are a video analyst. Your task is to analyze the provided image and audio context, and answer the query accurately.
                 Provide only relevant details for the question, without additional commentary.
-                \n\n
-                Query: [{query}]"""
+
+                Query: {query}
+                """
             },
             {
-                "type": "image_url",
-                "image_url": {
-                    "url": "http://mridul.ddns.net:47/image.jpg"
-                }
+                "type": "image",
+                "image": image_url
+            },
+            {
+                "type": "text",
+                "text": f"Audio Context: {context}"  
             }
         ]
     }]
-    
-    try :
-        response = client.chat.completions.create(
-            model="meta-llama/Llama-3.2-11B-Vision-Instruct", 
-            messages=messages,
-            max_tokens=max_token
-        )
-        print(response['choices'][0]['message']['content'])
-        return(response['choices'][0]['message']['content'])
-    except :
-        print("Error can get the responce from the huggingface.")
+
+    try:
+ 
+        return model_input(messages) 
+    except Exception as e:
+        print(f"Error while getting response from Hugging Face: {e}")
         return None
+    
+
+# def image_process_api_llama(query):
+#     import random
+#     max_token=random.randint(800, 1000)
+#     client = st.session_state.client
+#     query=query
+#     messages = [{
+#         "role": "user",
+#         "content": [
+#             {
+#                 "type": "text",
+#                 "text": """You are a video analyst. Your task is to analyze the provided image retrieved from the RAG system and answer the query accurately. 
+#                 Provide only relevant details for the question, without additional commentary.
+#                 \n\n
+#                 Query: [{query}]"""
+#             },
+#             {
+#                 "type": "image_url",
+#                 "image_url": {
+#                     "url": "http://mridul.ddns.net:47/image.jpg"
+#                 }
+#             }
+#         ]
+#     }]
+    
+#     try :
+#         response = client.chat.completions.create(
+#             model=st.session_state.hg_model, 
+#             messages=messages,
+#             max_tokens=max_token
+#         )
+#         print(response['choices'][0]['message']['content'])
+#         return(response['choices'][0]['message']['content'])
+#     except :
+#         print("Error can get the responce from the huggingface.")
+#         return None
 
 def download_youtube_video(url):
     yt = YouTube(url, on_progress_callback=on_progress)
@@ -544,6 +666,7 @@ def get_file():
         video_to_image(uploaded_file_name)
         # print(video_retrieve("who is the person in this video"))
         get_text(audio_file_info)
+        print("Done")
     
     elif youtube_url:
         video_path = download_youtube_video(youtube_url)
@@ -552,8 +675,10 @@ def get_file():
         video_to_image(video_path)
         get_text(audio_file_info)
 
+import json
+
 def main():
-    st.title("Cross-Modal LMM for Real-Time Video and Audio  Analysis")
+    st.title("Cross-Modal LMM for Real-Time Video and Audio Analysis")
     
     if not st.session_state.image_processed:
         get_file()
@@ -562,17 +687,18 @@ def main():
 
     with st.form(key='chat_form', clear_on_submit=True):
         user_input = st.text_input("You:", "")
+        expected_output = st.text_input("Expected Output:", "")
         submit_button = st.form_submit_button(label='Send')
 
-    if submit_button and user_input:
+    if submit_button and user_input and expected_output:
         st.session_state['messages'].append({"role": "user", "content": user_input})
         if user_input.lower() == 'exit':
             print("Processing exit")
             st.session_state.image_processed = None
             st.session_state['messages'] = []
+            clear_gpu_memory(st.session_state.llm_model)
             os.remove("temp.mp3")
             os.remove('text_chunks_and_embeddings_df.csv')
-            clear_gpu_memory(st.session_state.llm_model)
             torch.cuda.empty_cache() 
             import gc
             gc.collect()
@@ -581,18 +707,36 @@ def main():
         video_file = video_retrieve(user_input)
         upload_video_file(video_file[0])
         print(video_file[0])
-        video_output=image_process_api_llama(user_input)
+        response = image_and_audio_process(user_input)
         print("Image processed completed")
-        response = rag_answers(user_input,video_output)
+        print()
+        print(user_input)
+        print()
+        print(response)
         st.session_state['messages'].append({"role": "bot", "content": response})
+
+        # Save the user question, expected output, and response to a JSON file
+        data_entry = {
+            "question": user_input,
+            "expected_output": expected_output,
+            "generated_output": response
+        }
+        try:
+            with open("model_2.json", "r") as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            data = []
+
+        data.append(data_entry)
+
+        with open("model_2.json", "w") as file:
+            json.dump(data, file, indent=4)
     
     for message in st.session_state['messages'][::-1]: 
         if message["role"] == "user":
             st.write(f"You: {message['content']}")
         else:
             st.write(f"Bot: {message['content']}")
-
-
 
 
 
