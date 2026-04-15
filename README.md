@@ -84,9 +84,7 @@ This Streamlit application provides tools for video understanding and analysis, 
 ![ui1](https://github.com/user-attachments/assets/5e7eaf6a-763a-4792-8f3d-17cc806d3def)
 
 ## Example
-To run the Streamlit app, simply exe
-
-cute:
+To run the Streamlit app, simply execute:
 
 ```bash
 streamlit run app.py
